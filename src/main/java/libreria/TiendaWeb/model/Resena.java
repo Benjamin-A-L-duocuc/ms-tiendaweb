@@ -26,7 +26,8 @@ public class Resena {
     @Column(name = "id_usuario", nullable = false)
     private Long idUsuario;
 
-    // idProducto: Long — external from Inventario microservice (not in scope)
+    @Column(name = "id_producto", nullable = false)
+    private Long idProducto;
 
     @Column(name = "calificacion", nullable = false)
     private Integer calificacion;

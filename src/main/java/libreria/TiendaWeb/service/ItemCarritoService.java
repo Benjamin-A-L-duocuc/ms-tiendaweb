@@ -16,6 +16,10 @@ public class ItemCarritoService {
     @Autowired
     private ItemCarritoRepository itemCarritoRepository;
 
+    public List<ItemCarrito> obtenerPorCarritoId(Long carritoId) {
+        return itemCarritoRepository.findByCarritoId(carritoId);
+    }
+
     @Transactional
     public ItemCarrito guardar(ItemCarrito itemCarrito) {
         return itemCarritoRepository.save(itemCarrito);
@@ -35,7 +39,9 @@ public class ItemCarritoService {
                 .orElseThrow(() -> new RuntimeException("ItemCarrito no encontrado"));
 
         existente.setCantidad(itemCarrito.getCantidad());
-        existente.setCarritoId(itemCarrito.getCarritoId());
+        existente.setIdProducto(itemCarrito.getIdProducto());
+        existente.setNombreProducto(itemCarrito.getNombreProducto());
+        existente.setPrecioUnitario(itemCarrito.getPrecioUnitario());
 
         return itemCarritoRepository.save(existente);
     }
