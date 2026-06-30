@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class RegistroUsuarioClient {
 
-    private static final String BASE_URL = "http://localhost:8082/api/v1";
+    private static final String BASE_URL = "http://localhost:8093/api/v1";
 
     @Autowired
     private RestTemplate restTemplate;

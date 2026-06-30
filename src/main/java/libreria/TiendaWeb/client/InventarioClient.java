@@ -12,7 +12,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class InventarioClient {
 
-    private static final String BASE_URL = "http://localhost:8083/api/v1";
+    private static final String BASE_URL = "http://localhost:8094/api/v1";
 
     @Autowired
     private RestTemplate restTemplate;
