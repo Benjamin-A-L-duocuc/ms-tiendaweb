@@ -1,58 +1,61 @@
-# TiendaWeb
+# TiendaWeb — Tienda en Linea
 
-API de la tienda en linea. Carrito de compras, ordenes de compra, y resenas de productos.
+## Que es
 
-## Puerto
+La cara visible de la libreria para el cliente. Es el servicio que soporta la tienda virtual: desde navegar el catalogo, pasar productos por el carrito, hacer el pedido, hasta dejar una resena. No almacena productos ni usuarios — los consulta a otros servicios, y guarda solo lo que le compete: carritos, ordenes, y resenas.
 
-**8085** | DB: `Tienda_Web`
+## Flujo completo de compra
 
-## Endpoints
+### 1. Navegar el catalogo
+El cliente busca libros. TiendaWeb consulta el **Inventario** (:8094) y muestra los resultados, incluyendo el stock total disponible.
 
-### Carrito (`/api/v1/tienda`)
+### 2. Agregar al carrito
+Se validan dos cosas: que la sesion sea valida (via **Login** :8092) y que haya stock suficiente (via **Inventario**). Si el producto ya esta en el carrito, se suma la cantidad. El carrito guarda el precio al momento de agregarlo — asi si el precio cambia despues, el cliente paga lo que vio.
 
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| GET | `/tienda/catalogo` | Ver catalogo |
-| GET | `/tienda/productos/{id}` | Ver producto |
-| POST | `/tienda/carrito/agregar` | Agregar item al carrito |
-| PUT | `/tienda/carrito/modificar` | Modificar item |
-| DELETE | `/tienda/carrito/items/{idItem}` | Quitar item |
-| GET | `/tienda/carrito` | Ver carrito actual |
-| POST | `/tienda/carrito` | Crear carrito |
-| GET | `/tienda/carritos` | Listar carritos |
-| GET | `/tienda/carritos/{id}` | Ver carrito por ID |
-| PUT | `/tienda/carritos/{id}` | Actualizar carrito |
-| DELETE | `/tienda/carritos/{id}` | Eliminar carrito |
+### 3. Crear la orden
+El carrito se "convierte" en orden. Se calcula el subtotal y se agrega 19% de IVA chileno. La orden queda en estado `PENDIENTE_PAGO` y el carrito pasa a `convertido` (ya no se puede seguir agregando productos).
 
-### Ordenes (`/api/v1/tienda`)
+### 4. Confirmar la venta
+Se verifica todo el stock de nuevo, se reservan los productos en **Inventario**, y se crea la venta en **Ventas** (:8087). Si se aplica un descuento, se pasa al servicio de Ventas para que lo valide y aplique.
 
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| POST | `/tienda/ordenes` | Crear orden |
-| POST | `/tienda/ordenes/{id}/venta` | Confirmar venta |
-| GET | `/tienda/ordenes` | Listar ordenes |
-| GET | `/tienda/ordenes/{id}` | Ver orden |
-| PUT | `/tienda/ordenes/{id}` | Actualizar orden |
-| DELETE | `/tienda/ordenes/{id}` | Eliminar orden |
-| GET | `/tienda/ordenes/{id}/envio` | Ver envio de una orden |
-| GET | `/tienda/pedidos` | Ver pedidos |
-| GET | `/tienda/perfil` | Ver perfil |
-| GET | `/tienda/soporte` | Ver soporte |
+### 5. Rastrear el envio
+Una vez que el pedido esta `ENVIADA`, el cliente puede consultar el estado del envio via **Envios** (:8084).
 
-### Resenas (`/api/v1/tienda`)
+## El sistema de resenas
 
-| Metodo | Ruta | Descripcion |
-|--------|------|-------------|
-| POST | `/tienda/resenas` | Crear resena |
-| PUT | `/tienda/resenas` | Actualizar resena |
-| GET | `/tienda/productos/{idProducto}/resenas` | Resenas de un producto |
-| GET | `/tienda/resenas` | Listar resenas |
-| GET | `/tienda/resenas/{id}` | Ver resena |
-| DELETE | `/tienda/resenas/{id}` | Eliminar resena |
+Los clientes pueden calificar y comentar productos, pero con reglas:
+- Solo pueden dejar resenas si tienen al menos un pedido en estado `ENTREGADA`.
+- Un cliente solo puede dejar **una resena por producto**.
+- Los comentarios deben tener entre 20 y 1000 caracteres.
+- Palabras como "spam", "estafa", o "fraude" estan prohibidas.
 
-## Ejecucion
+## Integraciones
+
+Este es el microservicio que mas servicios consulta. Usa **5 clientes HTTP** distintos:
+
+| Servicio | Para que |
+|----------|----------|
+| Login (:8092) | Validar que el usuario tiene sesion activa |
+| Inventario (:8094) | Catalogo, precios, stock, reservas |
+| Ventas (:8087) | Descuentos, crear venta |
+| Envios (:8084) | Rastreo de envios |
+| RegistroUsuarios (:8093) | Perfil del usuario |
+
+## Ejecutar
 
 ```cmd
 cd TiendaWeb
 .\mvnw.cmd spring-boot:run
 ```
+
+Puerto: **8085** | DB: `Tienda_Web`
+
+## Endpoints principales
+
+**Catalogo:** `GET /api/v1/tienda/catalogo`, `GET /api/v1/tienda/productos/{id}`
+
+**Carrito:** `POST /api/v1/tienda/carrito/agregar`, `PUT /api/v1/tienda/carrito/modificar`, `DELETE /api/v1/tienda/carrito/items/{id}`, `GET /api/v1/tienda/carrito`
+
+**Ordenes:** `POST /api/v1/tienda/ordenes` (crear), `POST /api/v1/tienda/ordenes/{id}/venta` (confirmar compra), `GET /api/v1/tienda/pedidos`
+
+**Resenas:** `POST /api/v1/tienda/resenas`, `GET /api/v1/tienda/productos/{id}/resenas`
