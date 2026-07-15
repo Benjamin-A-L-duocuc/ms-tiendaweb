@@ -263,4 +263,53 @@ class CarritoServiceTest {
         carritoService.eliminar(1L);
         verify(carritoRepository).deleteById(1L);
     }
+
+    @Test
+    void agregarAlCarrito_sesionInvalida_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> carritoService.agregarAlCarrito(1L, 100L, 2))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Sesion no valida");
+    }
+
+    @Test
+    void modificarItemCarrito_sesionInvalida_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> carritoService.modificarItemCarrito(1L, 100L, 3))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Sesion no valida");
+    }
+
+    @Test
+    void modificarItemCarrito_cantidadInvalida_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(true);
+
+        assertThatThrownBy(() -> carritoService.modificarItemCarrito(1L, 100L, 0))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Cantidad debe ser mayor a 0");
+    }
+
+    @Test
+    void modificarItemCarrito_carritoNoEncontrado_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(true);
+        when(loginClient.obtenerSesion(1L)).thenReturn((Map) Map.of("idUsuario", 10L));
+        when(inventarioClient.verificarStockSuficiente(100L, 3)).thenReturn(true);
+        when(carritoRepository.findByIdUsuarioAndEstado(10L, EstadoCarrito.activo))
+            .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> carritoService.modificarItemCarrito(1L, 100L, 3))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Carrito no encontrado");
+    }
+
+    @Test
+    void revisarCarrito_sesionInvalida_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(false);
+
+        assertThatThrownBy(() -> carritoService.revisarCarrito(1L))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Sesion no valida");
+    }
 }

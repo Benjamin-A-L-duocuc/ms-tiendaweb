@@ -216,4 +216,31 @@ class ResenaServiceTest {
         resenaService.eliminar(1L);
         verify(resenaRepository).deleteById(1L);
     }
+
+    @Test
+    void cambiarResena_sesionInvalida_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(false);
+
+        Resena input = new Resena();
+        input.setId(1L);
+
+        assertThatThrownBy(() -> resenaService.cambiarResena(input, 1L))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Sesion no valida");
+    }
+
+    @Test
+    void cambiarResena_noEncontrada_lanzaExcepcion() {
+        when(loginClient.validarSesion(1L)).thenReturn(true);
+        when(loginClient.obtenerSesion(1L)).thenReturn((Map) Map.of("idUsuario", 10L));
+
+        Resena input = new Resena();
+        input.setId(99L);
+
+        when(resenaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> resenaService.cambiarResena(input, 1L))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Resena no encontrada");
+    }
 }
